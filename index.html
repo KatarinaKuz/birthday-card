@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Za tebe 💙</title>
+  <style>
+    *{box-sizing:border-box}
+    body{
+      margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #1b2cff 0%, #0b0f2a 55%, #05061a 100%);
+      overflow:hidden;
+    }
+
+    .wrap{ width:min(440px, 92vw); position:relative; display:flex; justify-content:center; }
+    .hint{
+      position:absolute; top:-52px; left:50%; transform:translateX(-50%);
+      color:rgba(255,255,255,.9); font-size:14px; text-align:center; user-select:none;
+    }
+
+    /* overlays */
+    .hearts{ position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+
+    /* FIREWORK HEART */
+    .heart{
+      position:absolute;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,.3));
+      animation: firework var(--dur) cubic-bezier(.12,.86,.18,1) forwards;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    @keyframes firework{
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(.55); }
+      12%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(520deg) scale(1.25); }
+    }
+
+    /* RAIN HEART */
+    .rain{
+      position:absolute;
+      top:-60px;
+      transform: translateX(-50%);
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,.25));
+      opacity: .95;
+      animation: rainFall linear forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes rainFall{
+      to { transform: translateX(-50%) translateY(112vh) rotate(360deg); opacity: 0.85; }
+    }
+
+    /* Envelope */
+    .envelope{
+      width: 340px; height: 220px; position:relative; cursor:pointer;
+      transition: transform .2s ease;
+      perspective: 1000px;
+      transform: translateZ(0);
+    }
+    .envelope:active{ transform: scale(.985); }
+
+    .env-back{
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, #0f5cff, #0b3aa3);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.35);
+      z-index: 0;
+    }
+
+    /* SLOT: hidden by default (no peeking, no bottom glitch) */
+    .slot{
+      position:absolute;
+      left: 18px; right: 18px;
+      top: 18px; bottom: 18px;
+      border-radius: 14px;
+      overflow: hidden; /* stays hidden unless fully open */
+      z-index: 1;
+      pointer-events:none;
+      transition: z-index .1s linear;
+    }
+
+    /* Card */
+    .card{
+      position:absolute;
+      left:50%;
+      width: 290px; height: 175px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.97);
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+      padding: 18px 18px 14px;
+
+      /* start DEEP inside so it never shows when closed */
+      transform: translateX(-50%) translateY(150px) scale(.985);
+      opacity: .98;
+
+      transition:
+        transform 1.05s cubic-bezier(.18,1.25,.22,1),
+        opacity .6s ease;
+      will-change: transform;
+    }
+    .card h1{ margin:0 0 8px; font-size:20px; color:#0b3aa3; }
+    .card p{ margin:0; font-size:14px; color:#1b2340; line-height:1.4; }
+    .card .from{ margin-top:10px; font-weight:bold; color:#0f5cff; }
+
+    /* Pocket (front) */
+    .env-pocket{
+      position:absolute; inset:0;
+      border-radius: 18px;
+      overflow:hidden;
+      z-index: 3;
+      transition: z-index .1s linear;
+    }
+    .env-pocket:before{
+      content:"";
+      position:absolute; left:0; right:0; bottom:0; height: 72%;
+      background: linear-gradient(180deg, #0b46c9, #07308a);
+      clip-path: polygon(0 0, 50% 65%, 100% 0, 100% 100%, 0 100%);
+      opacity: .98;
+    }
+    .env-pocket:after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,0)) left/50% 100% no-repeat,
+        linear-gradient(225deg, rgba(255,255,255,.08), rgba(255,255,255,0)) right/50% 100% no-repeat;
+      opacity:.35;
+      pointer-events:none;
+    }
+
+    /* Flap (top) */
+    .env-flap{
+      position:absolute; left:0; right:0; top:0; height: 72%;
+      border-radius: 18px;
+      overflow:hidden;
+      transform-origin: top center;
+      transition: transform .62s cubic-bezier(.2,.9,.2,1);
+      z-index: 4;
+      transform: rotateX(0deg);
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+    }
+    .env-flap:before{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, #2d78ff, #0f52d6);
+      clip-path: polygon(0 0, 100% 0, 50% 72%);
+      filter: brightness(1.06);
+    }
+
+    .seal{
+      position:absolute; left:50%; top:126px; transform:translateX(-50%);
+      width:56px; height:56px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #7fb2ff, #0f5cff);
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-size:22px;
+      z-index: 5;
+      user-select:none;
+      transition: z-index .1s linear, transform .2s ease;
+    }
+
+    /* ======= 2-step OPEN (robust, no clip-path needed) =======
+       opening: flap opens, card moves UP but still fully inside slot (so nothing can appear below envelope)
+       open: slot becomes overflow:visible and card continues OUT of envelope
+    */
+
+    /* step 1 */
+    .opening .env-flap{
+      transform: perspective(1000px) rotateX(180deg);
+      z-index: 3;
+    }
+    .opening .card{
+      /* IMPORTANT: bring card fully inside the slot (no below envelope) */
+      transform: translateX(-50%) translateY(6px) rotate(-0.4deg) scale(1.01);
+      opacity: 1;
+    }
+
+    /* step 2 */
+    .open .slot{
+      z-index: 10;
+      overflow: visible; /* now allowed to exit upward */
+    }
+    .open .env-pocket{ z-index: 4; }
+    .open .seal{
+      z-index: 11;
+      transform: translateX(-50%) translateY(2px) scale(1.02);
+    }
+    .open .card{
+      transform: translateX(-50%) translateY(-145px) rotate(-1.2deg) scale(1.02);
+    }
+
+    /* Sparkle */
+    .sparkle{
+      position:absolute; width:8px; height:8px; border-radius:50%;
+      background: rgba(255,255,255,.9);
+      animation: pop .9s ease-out forwards;
+      pointer-events:none;
+    }
+    @keyframes pop{
+      from{ transform: scale(.6); opacity: 0; }
+      20%{ opacity: 1; }
+      to{ transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="wrap">
+    <div class="hint">💙 Klikni na kovertu</div>
+
+    <div class="envelope" id="envelope" aria-label="Koverta">
+      <div class="env-back"></div>
+
+      <div class="slot">
+        <div class="card">
+          <h1>Srećan rođendan, ljubavi 💙</h1>
+          <p>
+            Želim ti da ti se sve lijepe stvari dešavaju brzo i lako.
+            Hvala ti što si moj mir i moja sreća. 💫
+          </p>
+          <p class="from">— Tvoja Kaća 💙</p>
+        </div>
+      </div>
+
+      <div class="env-pocket"></div>
+      <div class="env-flap"></div>
+      <div class="seal">💙</div>
+    </div>
+  </div>
+
+  <script>
+    const envelope = document.getElementById("envelope");
+    const heartsLayer = document.getElementById("hearts");
+
+    let isOpen = false;
+    let rainTimer = null;
+    let openTimeout = null;
+
+    function random(min, max){ return Math.random() * (max - min) + min; }
+
+    function sparkles(x, y){
+      for(let i=0;i<12;i++){
+        const s = document.createElement("div");
+        s.className = "sparkle";
+        s.style.left = x + "px";
+        s.style.top = y + "px";
+        s.style.setProperty("--x", random(-70, 70) + "px");
+        s.style.setProperty("--y", random(-70, 70) + "px");
+        document.body.appendChild(s);
+        setTimeout(()=>s.remove(), 900);
+      }
+    }
+
+    function fireworkHeartsFromMouth(mult=1){
+      const r = envelope.getBoundingClientRect();
+      const originX = r.left + r.width / 2;
+      const originY = r.top + 58;
+
+      const base = 70; // MORE hearts
+      const count = Math.floor(base * mult);
+
+      for(let i=0;i<count;i++){
+        const h = document.createElement("div");
+        h.className = "heart";
+        h.textContent = "💙";
+        h.style.left = originX + "px";
+        h.style.top = originY + "px";
+
+        const angle = random(-Math.PI * 0.98, -Math.PI * 0.02);
+        const power = random(120, 330);
+        const dx = Math.cos(angle) * power;
+        const dy = Math.sin(angle) * power;
+
+        h.style.setProperty("--dx", dx + "px");
+        h.style.setProperty("--dy", dy + "px");
+        h.style.setProperty("--dur", random(0.95, 1.55) + "s");
+        h.style.fontSize = random(16, 36) + "px";
+
+        heartsLayer.appendChild(h);
+        setTimeout(()=>h.remove(), 2000);
+      }
+    }
+
+    function spawnRainHeart(){
+      const h = document.createElement("div");
+      h.className = "rain";
+      h.textContent = "💙";
+      h.style.left = random(0, window.innerWidth) + "px";
+      h.style.fontSize = random(14, 34) + "px";
+      h.style.animationDuration = random(4.5, 9.5) + "s";
+      h.style.transform = `translateX(calc(-50% + ${random(-45,45)}px))`;
+      heartsLayer.appendChild(h);
+      setTimeout(()=>h.remove(), 11000);
+    }
+
+    function startRain(durationMs = 11000){
+      stopRain();
+      setTimeout(() => {
+        for(let i=0;i<18;i++) setTimeout(spawnRainHeart, i*70);
+        rainTimer = setInterval(spawnRainHeart, 190);
+        setTimeout(stopRain, durationMs);
+      }, 250);
+    }
+
+    function stopRain(){
+      if(rainTimer){
+        clearInterval(rainTimer);
+        rainTimer = null;
+      }
+    }
+
+    function openEnvelope(){
+      isOpen = true;
+
+      // step 1 (safe move)
+      envelope.classList.add("opening");
+
+      // hearts
+      fireworkHeartsFromMouth(1);
+      setTimeout(() => fireworkHeartsFromMouth(0.75), 160);
+      startRain(11000);
+
+      // step 2 (show out)
+      clearTimeout(openTimeout);
+      openTimeout = setTimeout(() => {
+        if(isOpen) envelope.classList.add("open");
+      }, 430);
+    }
+
+    function closeEnvelope(){
+      isOpen = false;
+      stopRain();
+
+      envelope.classList.remove("open");
+      clearTimeout(openTimeout);
+      openTimeout = setTimeout(() => {
+        envelope.classList.remove("opening");
+      }, 90);
+    }
+
+    envelope.addEventListener("click", (e) => {
+      sparkles(e.clientX, e.clientY);
+      if(!isOpen) openEnvelope();
+      else closeEnvelope();
+    });
+
+    envelope.tabIndex = 0;
+    envelope.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        envelope.click();
+      }
+    });
+  </script>
+</body>
+</html>
